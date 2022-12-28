@@ -1,4 +1,5 @@
-import {Outlet, NavLink, useLoaderData, Form, redirect} from 'react-router-dom';
+import {useEffect, useState} from 'react'
+import {Outlet, NavLink, useLoaderData, Form, redirect, useNavigation, useSubmit} from 'react-router-dom';
 import {getContacts, createContact} from '../contacts'
 
 export async function action(){
@@ -7,14 +8,53 @@ export async function action(){
     return redirect(`/contacts/${contact.id}/edit`);
 }
 
-export async function loader(){
-    const contacts = await getContacts();
-    return {contacts};
+export async function loader({request}){
+    const url = new URL(request.url);
+    const q = url.searchParams.get("q");
+
+    //console.log(`loader q= ${q}`);
+
+    const contacts = await getContacts(q);
+
+    //console.log(`loader contacts > ${contacts}`);
+    //const contacts = await getContacts();
+    return {contacts, q};
 }
 
 export default function Root(){
 
-    const {contacts} = useLoaderData();
+    const {contacts, q} = useLoaderData();
+    const [query, setQuery] = useState(q);
+    const navigation = useNavigation();
+    const submit = useSubmit();
+
+    // console.log(`Root q : ${q}`)
+    // console.log(`Root query : ${query}`)
+
+    //console.log(`navigation.state : ${navigation.state}`);
+
+    // console.log(`navigation.formAction : ${navigation.formAction}`);
+    // console.log(`navigation.formAction : ${navigation.formAction}`);
+
+    // if(navigation.state == "loading"){
+    //     console.log(`navigation.location.search : ${navigation.location.search}`);
+    //     console.log(`navigation.state : ${navigation.state}`);
+    //     console.log(`navigation.formData.values : ${navigation.formData.values[0]}`);
+    // }
+
+
+    
+    console.log(`navigation.location : ${navigation.location}`);
+    const searching = navigation.location && new URLSearchParams(navigation.location.search).has("q");
+
+    console.log(`searching > ${searching}`);
+
+    useEffect(()=>{
+        // console.log(`useEffect q : ${q}`);
+        // console.log(`useEffect query : ${query}`);
+        //setQuery(q);
+        document.getElementById("q").value = q;
+    }, [q]);
 
     return(
         <>
@@ -23,24 +63,34 @@ export default function Root(){
             <h1>React Router Contacts</h1>
                 <div>
                     {/* 사이드바 상단 검색창 (s) */}
-                    <form id="serarch-form" role="search">
+                    <Form id="serarch-form" role="search">
                         <input 
                             id="q"
+                            className={searching ? "loading" : ""}
                             aria-label="Search contacts"
                             placeholder="Search"
                             type="search"
                             name="q"
+                            defaultValue={q}
+                            //value={query}
+                            onChange={(e)=>{
+                                const isFirstSearch = q == null;
+                                //setQuery(e.target.value);
+                                submit(e.currentTarget.form, {
+                                    replace: !isFirstSearch,
+                                });
+                            }}
                         />
                         <div
                             id="search-spinner"
                             aria-hidden
-                            hidden={true}
+                            hidden={!searching}
                         />
                         <div
                             className="sr-only"
                             aria-live="polite"
                         />
-                    </form>
+                    </Form>
                     {/* 사이드바 상단 검색창 (e) */}
 
                     {/* 사이드바 상단 New button (s) */}
@@ -78,7 +128,7 @@ export default function Root(){
             {/* 사이드바 (e) */}
 
             {/* 우측 본문 (s) */}
-            <div id="detail">
+            <div id="detail" className={navigation.state === "loading" ? "loading" : ""}>
                 <Outlet />
             </div>
             {/* 우측 본문 (e) */}
