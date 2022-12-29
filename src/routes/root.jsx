@@ -44,10 +44,10 @@ export default function Root(){
 
 
     
-    console.log(`navigation.location : ${navigation.location}`);
+    //console.log(`navigation.location : ${navigation.location}`);
     const searching = navigation.location && new URLSearchParams(navigation.location.search).has("q");
 
-    console.log(`searching > ${searching}`);
+    //console.log(`searching > ${searching}`);
 
     useEffect(()=>{
         // console.log(`useEffect q : ${q}`);
@@ -74,10 +74,11 @@ export default function Root(){
                             defaultValue={q}
                             //value={query}
                             onChange={(e)=>{
-                                const isFirstSearch = q == null;
+                                const isFirstSearch = q === null;
+
                                 //setQuery(e.target.value);
                                 submit(e.currentTarget.form, {
-                                    replace: !isFirstSearch,
+                                    replace: !isFirstSearch, //location.replace 속성
                                 });
                             }}
                         />
